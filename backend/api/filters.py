@@ -1,8 +1,8 @@
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import FilterSet, filters
+
 from recipes.models import Ingredient, Recipe, Tag
-# Именно так и сгрупировал модули isort, настройки isort
-# я прописал в isort.cfg
+
 
 User = get_user_model()
 

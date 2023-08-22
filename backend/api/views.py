@@ -102,7 +102,7 @@ class RecipeViewSet(ModelViewSet):
             'ingredient__measurement_unit'
         ).annotate(amount=Sum('amount'))
 
-        text_shopping_list = generate_shopping_list_text(user, ingredients) 
+        text_shopping_list = generate_shopping_list_text(user, ingredients)
         filename = f'{user.username}_shopping_list.txt'
         text_response = HttpResponse(
             text_shopping_list, content_type='text/plain; charset=utf-8'
