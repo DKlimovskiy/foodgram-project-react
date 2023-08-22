@@ -5,13 +5,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-^28kdsk7ya#@-96gr8z@fybvics-by0txq8^nt_(eqn*n75047'
+SECRET_KEY = os.getenv('SECRET_KEY', '12345')
 
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
+
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -20,21 +23,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'rest_framework',
     'django_filters',
-    'rest_framework.authtoken',
     'djoser',
-
-    'core',
-    'users',
-    'recipes',
-    'api',
+    'corsheaders',
+    'rest_framework.authtoken',
+    'recipes.apps.RecipesConfig',
+    'users.apps.UsersConfig',
+    'api.apps.ApiConfig',
+    'colorfield',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -44,13 +47,10 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'foodgram.urls'
 
-
-TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [TEMPLATES_DIR],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -66,26 +66,26 @@ TEMPLATES = [
 WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 
-# POSTGRES_SETTINGS = {
-#     'ENGINE': 'django.db.backends.postgresql',
-#     'NAME': os.getenv('POSTGRES_DB', 'django'),
-#     'USER': os.getenv('POSTGRES_USER', 'django'),
-#     'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-#     'HOST': os.getenv('DB_HOST', ''),
-#     'PORT': os.getenv('DB_PORT', 5432)
-# }
 
-# SQLITE_SETTINGS = {
-#     'ENGINE': 'django.db.backends.sqlite3',
-#     'NAME': BASE_DIR / 'db.sqlite3',
-# }
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+if not DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            'NAME': os.getenv('DB_NAME', default='postgres'),
+            'USER': os.getenv('POSTGRES_USER', default='postgres'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD',
+                                  default='postgres'),
+            'HOST': os.getenv('DB_HOST', default='db'),
+            'PORT': os.getenv('DB_PORT', default='5432'),
+        }
+    }
 
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -104,9 +104,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-LANGUAGE_CODE = 'ru-RU'
+LANGUAGE_CODE = 'ru'
 
-TIME_ZONE = 'Europe/Moscow'
+TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
@@ -114,101 +114,47 @@ USE_L10N = True
 
 USE_TZ = True
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+STATIC_ROOT = (BASE_DIR / 'static')
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+MEDIA_ROOT = (BASE_DIR / 'media')
 
 AUTH_USER_MODEL = 'users.User'
 
-
-#                            Model constants
-
-
-STR_SYMBOLS_AMOUNT = 30
-
-# User model
-
-
-MAX_LENGTH_EMAIL = 254
-MAX_LENGTH_USERNAME = 150
-MAX_LENGTH_FIRST_NAME = 150
-MAX_LENGTH_LAST_NAME = 150
-
-
-# Recipe model
-
-MAX_LENGTH_RECIPE_NAME = 200
-RECIPE_MIN_COOKING_TIME = 1
-
-# Ingredient model
-
-MAX_LENGTH_INGREDIENT_NAME = 200
-INGREDIENT_MIN_AMOUNT = 1
-
-# Unit model
-
-MAX_LENGTH_UNIT_NAME = 200
-
-# Tag model
-
-MAX_LENGTH_TAG_NAME = 200
-MAX_LENGTH_TAG_COLOR = 7
-
-#                            DRF settings
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
-
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
     ],
-    'DEFAULT_FILTER_BACKENDS': (
-        'django_filters.rest_framework.DjangoFilterBackend',
+
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 6,
 }
-
-
-#                            Djoser settings
-
-
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
 DJOSER = {
-    'LOGIN_FIELD': 'email',
+    'SERIALIZERS': {
+        'user_create': 'api.serializers.CustomUserCreateSerializer',
+        'user': 'api.serializers.CustomUserSerializer',
+        'current_user': 'api.serializers.CustomUserSerializer',
+    },
+
+    'PERMISSIONS': {
+        'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
+        'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
+    },
     'HIDE_USERS': False,
-    'PERMISSIONS':
-        {
-            'user': ['djoser.permissions.CurrentUserOrAdmin'],
-            'user_list': ['rest_framework.permissions.AllowAny'],
-        },
-    'SERIALIZERS':
-        {
-            'user_create': 'api.serializers.UserCreateSerializer',
-            'user': 'api.serializers.UserSerializer',
-            'current_user': 'api.serializers.UserSerializer',
-        },
 }
 
-ALLOWED_USER_ACTIONS = [
-    'users-list',
-    'users-me',
-    'users-detail',
-    'users-set-password',
-    'users-subscriptions',
-    'users-subscribe'
+RECIPES_LIMIT = 3
+
+CORS_ALLOWED_ORIGINS = [
+    'http://127.0.0.1:80',
+    'http://localhost:80',
+    'http://nginx-1:80',
 ]
-
-
-JSON_PATH = 'static/data/ingredients.json'
-HELP_IMPORT_JSON_MESSAGE = 'Импорт данных из .json'
-
-CSV_PATH = 'static/data/ingredients.csv'
-HELP_IMPORT_CSV_MESSAGE = 'Импорт данных из .csv'
-
-
-SUCCES_IMPORT_MESSAGE = 'Загрузка данных завершена'

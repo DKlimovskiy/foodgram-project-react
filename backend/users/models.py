@@ -1,71 +1,68 @@
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import UniqueConstraint
 
-from core.validators import username_validator
+
+class UserRole:
+    USER = 'user'
+    ADMIN = 'admin'
+    choices = [
+        (USER, 'USER'),
+        (ADMIN, 'ADMIN')
+    ]
 
 
 class User(AbstractUser):
-    REQUIRED_FIELDS = ['email', 'first_name', 'last_name']
-
     username = models.CharField(
-        verbose_name='Имя пользователя',
-        max_length=settings.MAX_LENGTH_USERNAME,
+        'Имя пользователя',
+        max_length=150,
         unique=True,
-        validators=(username_validator,),
-        error_messages={
-            'unique': 'Пользователь с таким именем уже существует'
-        },
-    )
-    email = models.EmailField(
-        verbose_name='Email',
-        max_length=settings.MAX_LENGTH_EMAIL,
-        unique=True,
+        null=True,
     )
     first_name = models.CharField(
-        verbose_name='Имя',
-        max_length=settings.MAX_LENGTH_FIRST_NAME,
+        'Имя',
+        max_length=150,
+        blank=True
     )
     last_name = models.CharField(
-        verbose_name='Фамилия',
-        max_length=settings.MAX_LENGTH_LAST_NAME,
+        'Фамилия',
+        max_length=150,
+        blank=True
     )
+    email = models.EmailField(
+        'Элетронная почта',
+        max_length=254,
+        unique=True,
+    )
+    role = models.TextField(
+        choices=UserRole.choices,
+        default=UserRole.USER,
+    )
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     class Meta:
         ordering = ('id',)
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.username
 
 
-class Subscription(models.Model):
+class Subscribe(models.Model):
     user = models.ForeignKey(
         User,
+        related_name='subscriber',
         on_delete=models.CASCADE,
-        related_name='follower',
     )
     author = models.ForeignKey(
         User,
+        related_name='subscribing',
         on_delete=models.CASCADE,
-        related_name='following'
     )
 
     class Meta:
-        ordering = ('id', )
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'author'],
-                name='unique_subscription',
-            ),
-            models.CheckConstraint(
-                check=~models.Q(author=models.F('user')),
-                name='check_not_self'
-            ),
-        ]
-
-    def __str__(self) -> str:
-        return f'Подписка {self.user.username} на {self.author.username}'
+        ordering = ('-id',)
+        constraints = (
+            UniqueConstraint(fields=['user', 'author'],
+                             name='unique_subscription'),
+        )

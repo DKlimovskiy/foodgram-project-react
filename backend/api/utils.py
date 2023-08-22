@@ -1,26 +1,21 @@
-from django.shortcuts import get_object_or_404
-
-from recipes.models import Ingredient, IngredientRecipe, Tag
+from datetime import datetime
 
 
-def collect_ingredientsrecipe_objects(ingredient_data, recipe):
-    ingredients = []
-    for data in ingredient_data:
-        ingredient_id = data.get('ingredient', {}).get('id')
-        if ingredient_id:
-            ingredient = get_object_or_404(Ingredient, id=ingredient_id)
-            amount = data.get('amount')
-            ingredients.append(IngredientRecipe(
-                recipe=recipe,
-                ingredient=ingredient,
-                amount=amount
-            ))
-    return ingredients
+def generate_shopping_list_text(user, ingredients):
+    today = datetime.today()
 
+    shopping_list = (
+        f'Список покупок для: {user.get_full_name()}\n\n'
+        f'Дата: {today:%Y-%m-%d}\n\n'
+    )
 
-def collect_tags(tag_data):
-    tags = []
-    for tag_id in tag_data:
-        tag = get_object_or_404(Tag, id=tag_id)
-        tags.append(tag)
-    return tags
+    shopping_list += '\n'.join([
+        f'- {ingredient["ingredient__name"]} '
+        f'({ingredient["ingredient__measurement_unit"]})'
+        f' - {ingredient["amount"]}'
+        for ingredient in ingredients
+    ])
+
+    shopping_list += f'\n\nFoodgram ({today:%Y})'
+
+    return shopping_list
