@@ -83,7 +83,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         max_length=200,
-        db_index=True
+        db_index=True,
         verbose_name='Название'
     )
     image = models.ImageField(
