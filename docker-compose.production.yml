@@ -15,7 +15,7 @@ services:
     image: barsik2142/foodgram_backend
     env_file: .env
     volumes:
-      - static_volume:/app/static/
+      - static_volume:/app/backend_static/
       - media:/app/media/
   frontend:
     image: barsik2142/foodgram_frontend
