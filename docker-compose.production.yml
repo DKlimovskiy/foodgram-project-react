@@ -15,7 +15,7 @@ services:
     image: barsik2142/foodgram_backend
     env_file: .env
     volumes:
-      - static_value:/app/static/
+      - static_valume:/app/static/
       - media_value:/app/media/
   frontend:
     image: barsik2142/foodgram_frontend
@@ -27,7 +27,7 @@ services:
     image: barsik2142/foodgram_gateway
     env_file: .env
     volumes:
-      - static_value:/var/html/static/
+      - static_valume:/var/html/static/
       - media_value:/var/html/media/
     ports:
-      - 8000:80
+      - 8000:80 
