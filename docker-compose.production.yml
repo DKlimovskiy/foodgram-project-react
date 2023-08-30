@@ -28,6 +28,6 @@ services:
     env_file: .env
     volumes:
       - static_volume:/var/html/static/
-      - media_value:/var/html/media/
+      - media:/var/html/media/
     ports:
       - 8000:80 
