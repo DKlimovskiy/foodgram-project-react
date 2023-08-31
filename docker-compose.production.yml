@@ -50,7 +50,7 @@ services:
 
   frontend:
     image: barsik2142/foodgram_frontend:latest
-      depends_on:
+    depends_on:
       - db
       - backend
 
