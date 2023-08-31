@@ -37,6 +37,7 @@ services:
     image: postgres:13-alpine
     volumes:
       - db_volume:/var/lib/postgresql/data/
+    env_file: .env
 
   backend:
     image: barsik2142/foodgram_backend:latest
@@ -45,14 +46,14 @@ services:
     volumes:
       - static_value:/app/static/
       - media_value:/app/media/
-    env_file:
-      - ./.env
+    env_file: .env
 
   frontend:
     image: barsik2142/foodgram_frontend:latest
     depends_on:
       - db
       - backend
+    env_file: .env
 
   nginx:
     image: nginx:1.21.3-alpine
